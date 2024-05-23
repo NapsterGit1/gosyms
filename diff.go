@@ -360,7 +360,7 @@ func diffInFig(variable string) string {
 
 		if strings.Contains(variable, "{") {
 			// Регулярное выражение для поиска содержимого в фигурных скобках
-			textInFig = ExtractInBraces(variable)
+			textInFig = extractInBraces(variable)
 
 			//fmt.Println("TextInFig: ", textInFig)
 
