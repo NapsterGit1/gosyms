@@ -59,7 +59,7 @@ func deriveTerm(term string) string {
 	// Если в терме разделенном +- есть знак *, то есть терм в виде 2*x делим по умножить
 	if strings.Contains(term, "*") {
 
-		parts = splitIgnoringBracesSimp(term, '*')
+		parts = splitIgnoringBracesDiff(term, '*')
 
 		// Проверяем каждую часть
 		for _, part := range parts {
@@ -146,7 +146,7 @@ func splitIgnoringBracesDiff(expr string, sep rune) []string {
 func Diff(expr string) string {
 
 	// Раскрываем, упрощаем, собираем
-	expr = SimpDiffExpr(expr)
+	expr = simpDiffExpr(expr)
 
 	//fmt.Println("------------------------")
 	//fmt.Println("ПРОИЗВОДНЫЕ")
@@ -154,7 +154,7 @@ func Diff(expr string) string {
 
 	//fmt.Println("НАЧАЛО - ", expr)
 
-	terms := createTerms(expr)
+	terms := createTermsDiff(expr)
 	//fmt.Println("Создали термы:", terms)
 
 	var derivedTerms []string
@@ -164,10 +164,10 @@ func Diff(expr string) string {
 	}
 	resStr := strings.Join(derivedTerms, "+")
 
-	resStr = ReplaceClosingBrackets(resStr)
+	resStr = replaceClosingBrackets(resStr)
 
 	// Упрощаем полученное выражение
-	resStr = SimplifyExpr(resStr)
+	resStr = simplifyExpr(resStr)
 
 	return resStr
 }
