@@ -8,7 +8,7 @@ import (
 
 func evaluateExpression(expr string) string {
 
-	expr = ReplaceClosingBrackets(expr)
+	expr = replaceClosingBrackets(expr)
 
 	expr = strings.ReplaceAll(expr, "+(", "+1*(")
 	expr = strings.ReplaceAll(expr, "-(", "-1*(")
@@ -44,7 +44,7 @@ func evaluateExpression(expr string) string {
 			// Разбиваем выражение внутри скобок на элементы по знакам + и -
 			subExpr = strings.ReplaceAll(subExpr, "-", "+-")
 			//fmt.Println("ДЛИНА сабэкспр: ", len(subExpr))
-			subExprParts = SplitExpr(subExpr)
+			subExprParts = splitExpr(subExpr)
 
 			//fmt.Println("ДЛИНА САБА: ", len(subExprParts))
 			//fmt.Println("тЕСТИРУЕМ: ", subExprParts)
@@ -164,7 +164,7 @@ func replaceOperation(str string) string {
 }
 
 // Функция для разбора выражения с учетом вложенных фигурных скобок
-func SplitExpr(expr string) []string {
+func splitExpr(expr string) []string {
 	var result []string
 	var current strings.Builder
 	var insideBraces bool
@@ -206,7 +206,7 @@ func SplitExpr(expr string) []string {
 	return result
 }
 
-func ReplaceClosingBrackets(expr string) string {
+func replaceClosingBrackets(expr string) string {
 	var level int
 	runes := []rune(expr)
 	levels := make([]int, len(runes))
@@ -231,25 +231,25 @@ func ReplaceClosingBrackets(expr string) string {
 	return string(runes)
 }
 
-func ReplaceFigBracketsBack(expr string) string {
+func replaceFigBracketsBack(expr string) string {
 	expr = strings.ReplaceAll(expr, "{", "(")
 	expr = strings.ReplaceAll(expr, "}", ")")
 	return expr
 }
 
 // Основная программа упрощения
-func SimplifyExpr(expr string) string {
+func simplifyExpr(expr string) string {
 	// Раскрываем скобки
 	expr = evaluateExpression(expr)
 	expr = Simplify(expr)
-	expr = ReplaceFigBracketsBack(expr)
+	expr = replaceFigBracketsBack(expr)
 	expr = clearOne(expr)
 
 	return expr
 }
 
 // Аналог функции выше без возврата к круглым скобкам
-func SimpDiffExpr(expr string) string {
+func simpDiffExpr(expr string) string {
 
 	expr = strings.ReplaceAll(expr, "-(", "-1*(")
 	expr = strings.ReplaceAll(expr, "+(", "+1*(")
