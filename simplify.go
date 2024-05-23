@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func createTerms(expr string) []string {
+func createTermsSimp(expr string) []string {
 
 	// Проверяем вложенность переменных скобок внутри cos{} или sin{}
 	var level int
@@ -373,7 +373,7 @@ func Simplify(expr string) string {
 	// Проводим чистку знаков
 	expr = deleteCoefOne(expr)
 	// Разделяем строку на термы с помощью функции CreateTerms(expr)
-	terms := createTerms(expr)
+	terms := createTermsSimp(expr)
 	//fmt.Println("Получили массив всех элементов (термов): ", terms)
 
 	// Создаем карту для хранения коэффициентов для каждого терма
