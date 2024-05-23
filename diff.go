@@ -374,7 +374,7 @@ func diffInFig(variable string) string {
 	return textInFig
 }
 
-func ExtractInBraces(expr string) string {
+func extractInBraces(expr string) string {
 	var result []rune
 	var braceContent []rune
 	var level int
