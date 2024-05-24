@@ -366,10 +366,7 @@ func simplifyTerm(term string) string {
 	}
 }
 
-// Simplify it consists in simplifying the expression represented as a string
-
-// Simplify заключается в упрощении математического выражения, представленного в виде строки
-func Simplify(expr string) string {
+func simplify(expr string) string {
 	// Проводим чистку знаков
 	expr = deleteCoefOne(expr)
 	// Разделяем строку на термы с помощью функции CreateTerms(expr)
@@ -389,7 +386,7 @@ func Simplify(expr string) string {
 			var textInFig string
 			ExtractContent := extractContentInBraces(term)
 			//fmt.Println("ТО ЧТО ВЫРЕЗАЛИ НОВОЕ: ", ExtractContent)
-			textInFig = Simplify(ExtractContent)
+			textInFig = simplify(ExtractContent)
 
 			//fmt.Println("СОДЕРЖИМОЕ ФИГУРНЫХ СКОБОК:", textInFig)
 
