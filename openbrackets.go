@@ -94,7 +94,7 @@ func evaluateExpression(expr string) string {
 			//fmt.Println("ПОШЛА ВОЗНЯ 2: ", subExpr)
 
 			// ЗДЕСЬ МЫ УПРОЩАЕМ ТО ЧТО ВНУТРИ СКОБОК
-			subExpr = Simplify(subExpr)
+			subExpr = simplify(subExpr)
 
 			expr = expr[:targetIndex] + "+" + subExpr + expr[closeBracketIndex+1:]
 			expr = replaceOperation(expr)
@@ -238,10 +238,10 @@ func replaceFigBracketsBack(expr string) string {
 }
 
 // Основная программа упрощения
-func simplifyExpr(expr string) string {
+func SimplifyExpr(expr string) string {
 	// Раскрываем скобки
 	expr = evaluateExpression(expr)
-	expr = Simplify(expr)
+	expr = simplify(expr)
 	expr = replaceFigBracketsBack(expr)
 	expr = clearOne(expr)
 
@@ -263,7 +263,7 @@ func simpDiffExpr(expr string) string {
 
 	// Раскрываем скобки
 	expr = evaluateExpression(expr)
-	expr = Simplify(expr)
+	expr = simplify(expr)
 
 	return expr
 }
