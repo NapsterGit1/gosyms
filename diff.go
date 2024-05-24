@@ -167,7 +167,7 @@ func Diff(expr string) string {
 	resStr = replaceClosingBrackets(resStr)
 
 	// Упрощаем полученное выражение
-	resStr = simplifyExpr(resStr)
+	resStr = SimplifyExpr(resStr)
 
 	return resStr
 }
