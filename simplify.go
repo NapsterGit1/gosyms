@@ -1,6 +1,7 @@
 package gosyms
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -8,13 +9,30 @@ import (
 	"strings"
 )
 
-func createTermsSimp(expr string) []string {
+// Заглушка-ограничение функционала согласно требованиям к MVP
+func mvpLimitFunctionality(expr string) error {
+	unsupportedFunctions := []string{"tg", "ctg", "ln", "log"}
+	unsupportedOperations := []string{"/"}
 
+	for _, function := range unsupportedFunctions {
+		if strings.Contains(expr, function) {
+			return errors.New(fmt.Sprintf("Ошибка: Функция '%s' в настоящее время не поддерживается.", function))
+		}
+	}
+
+	for _, operation := range unsupportedOperations {
+		if strings.Contains(expr, operation) {
+			return errors.New(fmt.Sprintf("Ошибка: Операция '%s' в настоящее время не поддерживается.", operation))
+		}
+	}
+	// Если проверка пройдена, возвращаем nil для указания на отсутствие ошибки
+	return nil
+}
+
+func createTermsSimp(expr string) []string {
 	// Проверяем вложенность переменных скобок внутри cos{} или sin{}
 	var level int
-
 	// Разделить строку на термы
-	//fmt.Println("Строка из CreateTerms ", expr)
 	var terms []string
 	currentTerm := ""
 	checkTermsInMinus := ""
@@ -26,7 +44,6 @@ func createTermsSimp(expr string) []string {
 			// Если уровень вложенности больше нуля, уменьшаем его
 			level--
 		}
-
 		if (char == '+' || char == '-') && level == 0 {
 			if checkTermsInMinus != "*" {
 				if currentTerm != "" {
@@ -60,7 +77,6 @@ func splitTerm(term string) []string {
 		} else if char == '}' {
 			nestedLevel--
 		}
-
 		if char == '*' && nestedLevel == 0 {
 			parts = append(parts, part.String())
 			part.Reset()
@@ -72,7 +88,6 @@ func splitTerm(term string) []string {
 	if part.Len() > 0 {
 		parts = append(parts, part.String())
 	}
-
 	return parts
 }
 
@@ -83,10 +98,7 @@ func parseTerm(term string) (float64, string) {
 
 	if strings.Contains(term, "*") {
 		// Разбиваем терм на части
-		//fmt.Println("РАЗБИЛИ НА ТЕРМЫ 1: ", term)
 		parts := splitTerm(term)
-
-		//fmt.Println("РАЗБИЛИ НА ТЕРМЫ 2: ", parts)
 
 		// Проверяем каждую часть
 		for _, part := range parts {
@@ -95,30 +107,24 @@ func parseTerm(term string) (float64, string) {
 				coefficient = num
 			} else {
 				// Иначе это переменная
-				if strings.HasPrefix(part, "sin{") || strings.HasPrefix(part, "cos{") || strings.HasPrefix(part, "EXP{") ||
+				if strings.HasPrefix(part, "sin{") || strings.HasPrefix(part, "cos{") ||
+					strings.HasPrefix(part, "EXP{") ||
 					strings.HasPrefix(part, "tg{") || strings.HasPrefix(part, "ctg{") {
-					// Обработка функции sin(x) или cos(x)
+					// Обработка функций
 					variable = append(variable, part)
 				} else {
 					variable = append(variable, part)
 				}
 			}
 		}
-
-		// Костыль
 		if coefficient == 0 {
 			coefficient = 1
 		}
-
-		//fmt.Println("ДО ОШИБКИ ", variable, coefficient)
-
 		variableNew := multiplyVariables(variable)
-
 		// Если есть переменная и коэффициент не равен 0, возвращаем коэффициент и переменную в степени
 		if variableNew != "" && coefficient != 0 {
 			return coefficient, fmt.Sprintf("%s", variableNew)
 		}
-
 		return coefficient, variableNew
 	} else {
 		varOne := ""
@@ -129,11 +135,9 @@ func parseTerm(term string) (float64, string) {
 			// Иначе это переменная
 			varOne = term
 		}
-		// Костыль
 		if coefficient == 0 {
 			coefficient = 1
 		}
-
 		return coefficient, varOne
 	}
 }
@@ -201,9 +205,6 @@ func multiplyVariables(Variable []string) string {
 
 	for _, part := range Variable {
 		// Разбиваем на переменную и степень если не внутри фигурных скобок
-		//re := regexp.MustCompile(`(?:[^{}^]+|\{[^{}]*\})+`)
-		//termParts := re.FindAllString(part, -1)
-		//termParts := strings.Split(part, "^")
 		termParts := splitByCaretOutsideBraces(part)
 
 		variable := termParts[0]
@@ -245,18 +246,20 @@ func simplifyTerm(term string) string {
 	// Для корректной обработки выражения в том случае, если оно начинается с "-x..."
 	term = strings.ReplaceAll(term, "+x", "+1*x")
 	term = strings.ReplaceAll(term, "-x", "-1*x")
+
 	term = strings.ReplaceAll(term, "-sin", "-1*sin")
 	term = strings.ReplaceAll(term, "-cos", "-1*cos")
 	term = strings.ReplaceAll(term, "+sin", "+1*sin")
 	term = strings.ReplaceAll(term, "+cos", "+1*cos")
+
 	term = strings.ReplaceAll(term, "-tg", "-1*tg")
-	term = strings.ReplaceAll(term, "-ctg", "-1*ctg")
-	term = strings.ReplaceAll(term, "-EXP", "-1*EXP")
 	term = strings.ReplaceAll(term, "+tg", "+1*tg")
+	term = strings.ReplaceAll(term, "-ctg", "-1*ctg")
 	term = strings.ReplaceAll(term, "+ctg", "+1*ctg")
+
+	term = strings.ReplaceAll(term, "-EXP", "-1*EXP")
 	term = strings.ReplaceAll(term, "+EXP", "+1*EXP")
 
-	///////////////////////////////////////СОМНИТЕЛЬНО НО ОКЭЙ
 	// Проверяем, есть ли скобки в терме
 	if strings.Contains(term, "(") && strings.Contains(term, ")") {
 		// Разбиваем терм на две части: до скобки и после скобки
@@ -284,8 +287,6 @@ func simplifyTerm(term string) string {
 	// Разделить терм на коэффициенты и переменные
 	if strings.Contains(term, "*") {
 		parts := strings.Split(term, "*")
-
-		//fmt.Println("Разделить терм на коэффициенты и переменные")
 
 		// Проверяем есть ли в списке выражения в виде 5^2 которые можно вычислить
 		for i, part := range parts {
@@ -323,7 +324,6 @@ func simplifyTerm(term string) string {
 	} else {
 
 		// Проверяем есть ли в списке выражения в виде x, cos(x), sin(x) и так далее
-		//fmt.Println("ПУПУПУ1")
 		switch term {
 		case "x":
 			term = strings.ReplaceAll(term, "x", "1*x")
@@ -340,7 +340,6 @@ func simplifyTerm(term string) string {
 		}
 		isTermTrue := false
 
-		//fmt.Println("ПУПУПУ2")
 		if len(term) > 2 {
 			if term[1] == 'x' ||
 				(term[1] == 's' && term[2] == 'i' && term[3] == 'n') ||
@@ -352,7 +351,6 @@ func simplifyTerm(term string) string {
 			}
 		}
 
-		//fmt.Println("ПУПУПУ3")
 		// УПРОЩАЕМ МЕСТА С +-X в +1*X
 		if (term[0] == '+' || term[0] == '-') && isTermTrue && len(term) > 1 {
 			var simplifiedExpr strings.Builder
@@ -371,48 +369,29 @@ func simplify(expr string) string {
 	expr = deleteCoefOne(expr)
 	// Разделяем строку на термы с помощью функции CreateTerms(expr)
 	terms := createTermsSimp(expr)
-	//fmt.Println("Получили массив всех элементов (термов): ", terms)
 
 	// Создаем карту для хранения коэффициентов для каждого терма
 	coefficients := make(map[string]float64)
 
 	for _, term := range terms {
-		//fmt.Println("_________________")
 		// Парсим коэффициент и переменную из терма
-		//fmt.Println("Текущий терм: ", term)
-
 		if strings.Contains(term, "{") {
-
 			var textInFig string
 			ExtractContent := extractContentInBraces(term)
-			//fmt.Println("ТО ЧТО ВЫРЕЗАЛИ НОВОЕ: ", ExtractContent)
 			textInFig = simplify(ExtractContent)
-
-			//fmt.Println("СОДЕРЖИМОЕ ФИГУРНЫХ СКОБОК:", textInFig)
-
 			term = strings.ReplaceAll(term, ExtractContent, textInFig)
-
-			//fmt.Println("СОДЕРЖИМОЕ ФИГУРНЫХ СКОБОК ИТОГОВЫЙ ТЕРМ:", textInFig)
 		}
-
-		//fmt.Println(term)
-
 		if strings.Contains(term, "#") {
 			term = strings.ReplaceAll(term, "#", "*")
 		}
-
 		if term == "+0" || term == "-0" || term == "0" {
 			term = ""
 		} else {
-			//fmt.Println("ПЕРЕД")
 			term = simplifyTerm(term)
-
-			//fmt.Println("Между SimplifyTerm и ParseTerm", term)
 			// Разделяем элементы по карте в виде x:5
 			coef, variable := parseTerm(term)
 			// Добавляем коэффициент к существующему значению в карте
 			coefficients[variable] += coef
-			//fmt.Println("Карта: ", coefficients)
 		}
 	}
 
@@ -420,8 +399,6 @@ func simplify(expr string) string {
 	var simplifiedExpr strings.Builder
 	for variable, coefficient := range coefficients {
 		if coefficient != 0 {
-			//fmt.Println("Коэффициент ", coefficient)
-			//fmt.Println("Переменная ", variable)
 			// В нашем случае из-за того, что в +coef + не учитывается, то приходится добавлять
 			if simplifiedExpr.Len() > 0 && coefficient > 0 {
 				simplifiedExpr.WriteString("+")
@@ -452,8 +429,6 @@ func simplify(expr string) string {
 	if resultStr == "" {
 		resultStr = "0"
 	}
-	//fmt.Println("Вернули res ", resultStr)
-
 	return resultStr
 }
 
@@ -482,62 +457,27 @@ func extractContentInBraces(expr string) string {
 			result = append(result, char)
 		}
 	}
-
 	return string(braceContent)
 }
 
 func deleteCoefOne(resultStr string) string {
-
 	if resultStr == "" {
 		return resultStr
 	}
 
 	for i := 0; i < 3; i++ {
-		//fmt.Println("Строка = ", resultStr)
-		//fmt.Println("Начали чистку")
 
 		resultStr = replaceAll(resultStr)
 
-		//fmt.Println("Строка = ", resultStr)
-
 		partsStr := splitIgnoringBracesSimp(resultStr, '+')
-
-		//fmt.Println("partsStr ", partsStr)
-		// Удаляем коэффициент если он равен 1
-		//fmt.Println("partsStr[0] ", partsStr[0])
-
-		//str := partsStr[0]
-		//fmt.Println("PARTSSTR: ", str)
 
 		resultStr = strings.Join(partsStr, "+")
 		resultStr = replaceAll(resultStr)
 	}
-	//fmt.Println("Вернули", resultStr)
-
 	return resultStr
 }
 
 func clearOne(str string) string {
-	/*for range len(str) {
-		index := strings.Index(str, substr)
-		//fmt.Println("ИНДЕКС ", index)
-		if index == -1 {
-			break
-		}
-		// Проверка начала строки или знаков перед "1*"
-		if index == 0 || str[index-1] == '+' || str[index-1] == '-' || str[index-1] == '(' || str[index-1] == '*' {
-			// Проверяем, что после "1*" следует либо конец строки, либо не цифра
-			if index+len(substr) == len(str) || !unicode.IsDigit(rune(str[index+len(substr)])) {
-				str = str[:index] + str[index+len(substr):]
-			} else {
-				index += len(substr)
-			}
-		} else {
-			index += len(substr)
-		}
-		//fmt.Println("ИНЛЕКС ", index)
-	}
-	return str*/
 	re := regexp.MustCompile(`(?:(\+|-|\(|^))1\*`)
 	return re.ReplaceAllString(str, "$1")
 }
@@ -569,15 +509,12 @@ func splitIgnoringBracesSimp(expr string, delimiter rune) []string {
 	if len(currentPart) > 0 {
 		parts = append(parts, string(currentPart))
 	}
-
 	return parts
 }
 
 func replaceAll(resultStr string) string {
-	resultStr = strings.ReplaceAll(resultStr, "1x", "x")
-	resultStr = strings.ReplaceAll(resultStr, "-1x", "-x")
-
-	//resultStr = strings.ReplaceAll(resultStr, "+1*", "+")
+	//resultStr = strings.ReplaceAll(resultStr, "1x", "x")
+	//resultStr = strings.ReplaceAll(resultStr, "-1x", "-x")
 
 	resultStr = strings.ReplaceAll(resultStr, "+1*", "+")
 	resultStr = strings.ReplaceAll(resultStr, "-1*", "-")
@@ -592,4 +529,23 @@ func replaceAll(resultStr string) string {
 	resultStr = strings.ReplaceAll(resultStr, "+-", "-")
 	resultStr = strings.ReplaceAll(resultStr, "--", "+")
 	return resultStr
+}
+
+// Основная программа упрощения
+func SimplifyExpr(expr string) string {
+	// Проверяем на наличие функций недоступных в данной версии
+	err := mvpLimitFunctionality(expr)
+
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
+	// Раскрываем скобки
+	expr = evaluateExpression(expr)
+	expr = simplify(expr)
+	expr = replaceFigBracketsBack(expr)
+	expr = clearOne(expr)
+
+	return expr
 }
