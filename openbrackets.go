@@ -7,9 +7,7 @@ import (
 )
 
 func evaluateExpression(expr string) string {
-
 	expr = replaceClosingBrackets(expr)
-
 	expr = strings.ReplaceAll(expr, "+(", "+1*(")
 	expr = strings.ReplaceAll(expr, "-(", "-1*(")
 	if expr[0] == '(' {
@@ -19,9 +17,6 @@ func evaluateExpression(expr string) string {
 		expr[0] == 'E' {
 		expr = "1*" + expr
 	}
-
-	//fmt.Println("expr ", expr)
-
 	// Находим индексы скобок
 	var openBracketIndex, closeBracketIndex int
 	for i, char := range expr {
@@ -33,8 +28,7 @@ func evaluateExpression(expr string) string {
 		}
 	}
 
-	//fmt.Println("РАскрыли скобки")
-	// Раскрываем скобки
+	// Раскрываем скобки если они есть
 	if openBracketIndex != 0 && closeBracketIndex != 0 {
 		subExpr := expr[openBracketIndex+1 : closeBracketIndex]
 
@@ -43,12 +37,7 @@ func evaluateExpression(expr string) string {
 		if openBracketIndex > 0 && expr[openBracketIndex-1] == '*' {
 			// Разбиваем выражение внутри скобок на элементы по знакам + и -
 			subExpr = strings.ReplaceAll(subExpr, "-", "+-")
-			//fmt.Println("ДЛИНА сабэкспр: ", len(subExpr))
 			subExprParts = splitExpr(subExpr)
-
-			//fmt.Println("ДЛИНА САБА: ", len(subExprParts))
-			//fmt.Println("тЕСТИРУЕМ: ", subExprParts)
-			//fmt.Println("тЕСТИРУЕМ2: ", subExpr)
 
 			// Преобразуем знак перед * в число
 			targetIndex := 0
@@ -61,23 +50,15 @@ func evaluateExpression(expr string) string {
 			if targetIndex == -1 {
 				targetIndex = 0
 			}
-
-			//fmt.Println("Оно ", targetIndex)
-			// ЧИСЛО НА КОТОРОЕ БУДЕТ УМНОЖАТЬСЯ СКОБКА
 			signValue, err := strconv.Atoi(expr[targetIndex : openBracketIndex-1])
-
 			if err != nil {
 				// Если не удалось преобразовать, значит это переменная, добавим множитель к каждому элементу в скобках
 				for i, part := range subExprParts {
 					subExprParts[i] = part + "*" + expr[targetIndex:openBracketIndex-1]
 				}
-				//fmt.Println("НОВЫЙ САБ: ", subExprParts)
-
 			} else {
-				//fmt.Println("expr ", expr)
 				// Умножаем каждый элемент на значение перед *
 				for i, part := range subExprParts {
-
 					// ЕСЛИ X НАХОДИТСЯ ВНУТРИ СКОБОК
 					// Если часть содержит переменную 'x', умножаем только на коэффициент
 					if strings.Contains(part, "x") {
@@ -87,20 +68,17 @@ func evaluateExpression(expr string) string {
 					}
 				}
 			}
-
-			//fmt.Println("ПОШЛА ВОЗНЯ 1: ", subExpr)
 			// Собираем обратно выражение внутри скобок
 			subExpr = strings.Join(subExprParts, "+")
-			//fmt.Println("ПОШЛА ВОЗНЯ 2: ", subExpr)
 
 			// ЗДЕСЬ МЫ УПРОЩАЕМ ТО ЧТО ВНУТРИ СКОБОК
 			subExpr = simplify(subExpr)
 
 			expr = expr[:targetIndex] + "+" + subExpr + expr[closeBracketIndex+1:]
 			expr = replaceOperation(expr)
-
 		}
 
+		// Меняем знаки внутри скобки если перед ней стоит знак '-'
 		if strings.Contains(subExpr, "(") && strings.Contains(subExpr, ")") {
 			// Проверяем знак перед скобкой
 			if openBracketIndex > 0 && expr[openBracketIndex-1] == '-' {
@@ -159,7 +137,6 @@ func replaceOperation(str string) string {
 	str = strings.ReplaceAll(str, "--", "+")
 	str = strings.ReplaceAll(str, "-+", "-")
 	str = strings.ReplaceAll(str, "+-", "-")
-
 	return str
 }
 
@@ -193,7 +170,6 @@ func splitExpr(expr string) []string {
 					current.Reset()
 				}
 			}
-
 		default:
 			current.WriteRune(char)
 		}
@@ -214,9 +190,10 @@ func replaceClosingBrackets(expr string) string {
 	for i := 0; i < len(runes); i++ {
 		if runes[i] == '(' {
 			level++
-			// Проверяем, если это sin или cos
-			if i >= 3 && (string(runes[i-3:i]) == "sin" || string(runes[i-3:i]) == "cos" || string(runes[i-3:i]) == "EXP" ||
-				string(runes[i-3:i]) == "tg" || string(runes[i-3:i]) == "ctg") {
+			// Проверяем, если функции
+			if i >= 3 && (string(runes[i-3:i]) == "sin" || string(runes[i-3:i]) == "cos" ||
+				string(runes[i-3:i]) == "EXP" || string(runes[i-3:i]) == "tg" ||
+				string(runes[i-3:i]) == "ctg") {
 				levels[level] = i
 				runes[i] = '{'
 			}
@@ -234,36 +211,5 @@ func replaceClosingBrackets(expr string) string {
 func replaceFigBracketsBack(expr string) string {
 	expr = strings.ReplaceAll(expr, "{", "(")
 	expr = strings.ReplaceAll(expr, "}", ")")
-	return expr
-}
-
-// Основная программа упрощения
-func SimplifyExpr(expr string) string {
-	// Раскрываем скобки
-	expr = evaluateExpression(expr)
-	expr = simplify(expr)
-	expr = replaceFigBracketsBack(expr)
-	expr = clearOne(expr)
-
-	return expr
-}
-
-// Аналог функции выше без возврата к круглым скобкам
-func simpDiffExpr(expr string) string {
-
-	expr = strings.ReplaceAll(expr, "-(", "-1*(")
-	expr = strings.ReplaceAll(expr, "+(", "+1*(")
-
-	if expr[0] == '(' {
-		expr = "1*" + expr
-	}
-	if expr[0] == '-' && expr[1] == '(' {
-		expr = "-1*" + expr
-	}
-
-	// Раскрываем скобки
-	expr = evaluateExpression(expr)
-	expr = simplify(expr)
-
 	return expr
 }
