@@ -135,7 +135,7 @@ func Diff(expr string) string {
 		return ""
 	}
 
-	expr = strings.ReplaceAll(str, " ", "")
+	expr = strings.ReplaceAll(expr, " ", "")
 	
 	// Раскрываем, упрощаем, собираем
 	expr = simpDiffExpr(expr)
