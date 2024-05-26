@@ -541,6 +541,8 @@ func SimplifyExpr(expr string) string {
 		return ""
 	}
 
+	expr = strings.ReplaceAll(str, " ", "")
+
 	// Раскрываем скобки
 	expr = evaluateExpression(expr)
 	expr = simplify(expr)
