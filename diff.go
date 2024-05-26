@@ -35,16 +35,6 @@ func createTermsDiff(expr string) []string {
 	return terms
 }
 
-/*func DeriveParseTerm(term string) []string {
-	var parts []string
-	if strings.Contains(term, "*") {
-		parts = strings.Split(term, "*")
-		return parts
-	} else {
-		return parts
-	}
-}*/
-
 // Найти производную терма
 func deriveTerm(term string) string {
 	term = strings.ReplaceAll(term, " ", "")
@@ -58,13 +48,9 @@ func deriveTerm(term string) string {
 
 	// Если в терме разделенном +- есть знак *, то есть терм в виде 2*x делим по умножить
 	if strings.Contains(term, "*") {
-
 		parts = splitIgnoringBracesDiff(term, '*')
-
 		// Проверяем каждую часть
 		for _, part := range parts {
-			//fmt.Println("ТЕСТИРУЕМ КАЖДУЮ ЧАСТЬ: ", part)
-
 			if num, err := strconv.ParseFloat(part, 64); err == nil {
 				// Если удалось преобразовать в число, это коэффициент
 				coefficient = num
@@ -89,8 +75,6 @@ func deriveTerm(term string) string {
 			coefficient = 1
 		}
 
-		//fmt.Println("Поделили терм на : ", coefficient, variable)
-
 	} else {
 		if num, err := strconv.ParseFloat(term, 64); err == nil {
 			//Если удалось преобразовать в число, это коэффициент
@@ -105,8 +89,6 @@ func deriveTerm(term string) string {
 	if coefficient == 0 {
 		coefficient = 1
 	}
-
-	//fmt.Println("ЭТО МОЕ ", coefficient, variable)
 
 	// Основная часть с вычислением производных каждого терма
 	resultTermDiff = diffMain(coefficient, variable)
@@ -145,25 +127,24 @@ func splitIgnoringBracesDiff(expr string, sep rune) []string {
 // Найти производную выражения
 func Diff(expr string) string {
 
+	// Проверяем на наличие функций недоступных в данной версии
+	err := mvpLimitFunctionality(expr)
+
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
 	// Раскрываем, упрощаем, собираем
 	expr = simpDiffExpr(expr)
 
-	//fmt.Println("------------------------")
-	//fmt.Println("ПРОИЗВОДНЫЕ")
-	//fmt.Println("------------------------")
-
-	//fmt.Println("НАЧАЛО - ", expr)
-
 	terms := createTermsDiff(expr)
-	//fmt.Println("Создали термы:", terms)
 
 	var derivedTerms []string
 	for _, term := range terms {
 		derivedTerms = append(derivedTerms, deriveTerm(term))
-		//fmt.Println("Производные = ", derivedTerms)
 	}
 	resStr := strings.Join(derivedTerms, "+")
-
 	resStr = replaceClosingBrackets(resStr)
 
 	// Упрощаем полученное выражение
@@ -194,18 +175,6 @@ func diffMain(coeff float64, variable string) string {
 		resultStr = fmt.Sprintf("%.0f", coeff)
 	}
 
-	/*fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("___________________")
-	fmt.Println("ПЕРЕМЕННЫЕЕЕЕ 1: ", variable)*/
-
-	//fmt.Println("ПЕРЕМЕННЫЕЕЕЕ 2: ", variable)
-
 	// Проверка и дифференцирование выражений вида x^n
 	if strings.Contains(variable, "^") {
 		re := regexp.MustCompile(`(-?)x\^(\d+)`)
@@ -233,143 +202,81 @@ func diffMain(coeff float64, variable string) string {
 		switch {
 		case strings.Contains(variable, "cos"):
 			variable = strings.ReplaceAll(variable, "cos", "-sin")
-
 			newCoeff := diffInFig(variable)
-
 			if strings.Contains(newCoeff, "+") || strings.Contains(newCoeff, "-") {
 				newCoeff = "(" + newCoeff + ")"
 			}
-
 			resultStr = fmt.Sprintf("%.0f*%s*%s", coeff, variable, newCoeff)
-
-			//fmt.Println("RESULTSTR: ", resultStr)
 		case strings.Contains(variable, "sin"):
 			variable = strings.ReplaceAll(variable, "sin", "cos")
-			resultStr = fmt.Sprintf("%.0f*%s", coeff, variable)
-
+			//resultStr = fmt.Sprintf("%.0f*%s", coeff, variable)
 			newCoeff := diffInFig(variable)
-
 			if strings.Contains(newCoeff, "+") || strings.Contains(newCoeff, "-") {
 				newCoeff = "(" + newCoeff + ")"
 			}
-
 			resultStr = fmt.Sprintf("%.0f*%s*%s", coeff, variable, newCoeff)
 		case strings.Contains(variable, "EXP"):
 			variable = strings.ReplaceAll(variable, "EXP", "EXP")
-			resultStr = fmt.Sprintf("%.0f*%s", coeff, variable)
+			//resultStr = fmt.Sprintf("%.0f*%s", coeff, variable)
 
 			newCoeff := diffInFig(variable)
 
 			if strings.Contains(newCoeff, "+") || strings.Contains(newCoeff, "-") {
 				newCoeff = "(" + newCoeff + ")"
 			}
-
 			resultStr = fmt.Sprintf("%.0f*%s*%s", coeff, variable, newCoeff)
 		}
 	} else {
 		// ОБРАБАТЫВАЕМ СИТУАЦИЮ (f(x)*g(x))' = f(x)'*g(x)+f(x)*g(x)'
 		partsVariable := strings.Split(variable, "#")
-
-		//fmt.Println("ВСЕВСЕВСЕ ", partsVariable)
-
-		//fmt.Println("ДЛИНА Массив ДО: ", len(partsVariable))
-		//fmt.Println("Массив ДО: ", partsVariable)
-
 		resultStr = ""
 		var resList []string
 
-		fmt.Println("------------------")
 		for i := 0; i < len(partsVariable); i++ {
 			derivative := diffMain(coeff, partsVariable[i])
-
 			newLess := ""
 			newLess = diffInFig(partsVariable[i])
-
 			if strings.Contains(newLess, "+") || strings.Contains(newLess, "-") {
 				newLess = "(" + newLess + ")"
 			}
-
-			//fmt.Println("------------------")
-			//fmt.Println("Отдельные производные:", derivative)
-			//fmt.Println("Длина ", len(partsVariable)-1)
-			//fmt.Println("ТУТ i = ", i)
-
-			//fmt.Println("newLess: ", newLess)
-
 			switch i {
 			case 0:
-				//fmt.Println(i)
-				//fmt.Println("Тестим сейчас:", partsVariable)
 				newPartsVariable := make([]string, len(partsVariable))
 				copy(newPartsVariable, partsVariable)
-
 				newPartsVariable = newPartsVariable[i+1:]
-
-				//fmt.Println("Новые части 1:", newPartsVariable)
-
 				resultStr = derivative + "*" + strings.Join(newPartsVariable, "*")
 				resList = append(resList, resultStr)
-				//fmt.Println("Промежуточный результат: ", resultStr)
-
 			case len(partsVariable) - 1:
-				//fmt.Println(i)
-				//fmt.Println("Тестим сейчас:", partsVariable)
 				newPartsVariable := make([]string, len(partsVariable))
 				copy(newPartsVariable, partsVariable)
-
 				newPartsVariable = newPartsVariable[:len(partsVariable)-1]
-				//fmt.Println("Новые части 3:", newPartsVariable)
-
 				resultStr = derivative + "*" + strings.Join(newPartsVariable, "*")
 				resList = append(resList, resultStr)
-				//fmt.Println("Промежуточный результат: ", resultStr)
-
 			default:
-				//fmt.Println(i)
-				//fmt.Println("Тестим сейчас:", partsVariable)
 				newPartsVariable := make([]string, len(partsVariable))
 				copy(newPartsVariable, partsVariable)
-
-				//fmt.Println("Исходный: ", partsVariable)
-
 				newPartsVariable = append(newPartsVariable[:i], newPartsVariable[i+1:]...)
-				//fmt.Println("Новые части 3:", newPartsVariable)
-
 				resultStr = derivative + "*" + strings.Join(newPartsVariable, "*")
 				resList = append(resList, resultStr)
-				//fmt.Println("Промежуточный результат: ", resultStr)
 			}
-
-			//fmt.Println("Получилось:", resultStr)
 		}
-
 		LastResult := strings.Join(resList, "+")
-
 		resultStr = LastResult
 
 	}
-	//fmt.Println("______________________________________________________________________________________")
 	return resultStr
 }
 
 func diffInFig(variable string) string {
-
 	var textInFig string
-
-	if strings.Contains(variable, "sin{") || strings.Contains(variable, "cos{") || strings.Contains(variable, "EXP{") {
-
+	if strings.Contains(variable, "sin{") ||
+		strings.Contains(variable, "cos{") ||
+		strings.Contains(variable, "EXP{") {
 		if strings.Contains(variable, "{") {
 			// Регулярное выражение для поиска содержимого в фигурных скобках
 			textInFig = extractInBraces(variable)
-
-			//fmt.Println("TextInFig: ", textInFig)
-
 			textInFig = Diff(textInFig)
-
-			//fmt.Println("TextInFig: ", textInFig)
-			//fmt.Println("НОВОЕ СОДЕРЖИМОЕ :", textInFig)
 		}
-		//newDiffOper == ""
 	}
 	return textInFig
 }
@@ -401,4 +308,21 @@ func extractInBraces(expr string) string {
 	}
 
 	return string(braceContent)
+}
+
+// Аналог функции выше без возврата к круглым скобкам
+func simpDiffExpr(expr string) string {
+	expr = strings.ReplaceAll(expr, "-(", "-1*(")
+	expr = strings.ReplaceAll(expr, "+(", "+1*(")
+	if expr[0] == '(' {
+		expr = "1*" + expr
+	}
+	if expr[0] == '-' && expr[1] == '(' {
+		expr = "-1*" + expr
+	}
+	// Раскрываем скобки
+	expr = evaluateExpression(expr)
+	expr = simplify(expr)
+
+	return expr
 }
