@@ -1,9 +1,10 @@
-package gosyms
+package main
 
 import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -158,9 +159,11 @@ func simplifyPow(term string) string {
 	if strings.Contains(term, "^") && checkNumbBase && checkNumbPow {
 		base := numbBase
 		pow := numbPow
-		//fmt.Println("Base: ", base)
-		//fmt.Println("pow: ", pow)
 		result := math.Pow(base, pow)
+		return strconv.FormatFloat(result, 'f', -1, 64)
+	}
+	if strings.Contains(term, "^") && !checkNumbBase && checkNumbPow && numbPow == 0 {
+		result := 1.0
 		return strconv.FormatFloat(result, 'f', -1, 64)
 	}
 	return term
@@ -351,6 +354,10 @@ func simplifyTerm(term string) string {
 			}
 		}
 
+		if strings.Contains(term, "^") {
+			term = simplifyPow(term)
+		}
+
 		// УПРОЩАЕМ МЕСТА С +-X в +1*X
 		if (term[0] == '+' || term[0] == '-') && isTermTrue && len(term) > 1 {
 			var simplifiedExpr strings.Builder
@@ -534,14 +541,22 @@ func replaceAll(resultStr string) string {
 // Основная программа упрощения
 func SimplifyExpr(expr string) string {
 	// Проверяем на наличие функций недоступных в данной версии
-	err := mvpLimitFunctionality(expr)
+	//err := mvpLimitFunctionality(expr)
 
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
+	//if err != nil {
+	//	fmt.Println(err)
+	//	os.Exit(1) // Прекращаем выполнение программы
+	//}
 
 	expr = strings.ReplaceAll(expr, " ", "")
+
+	err := validateExpression(expr)
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		os.Exit(1) // Прекращаем выполнение программы
+	} else {
+		fmt.Println("Выражение валидно.")
+	}
 
 	// Раскрываем скобки
 	expr = evaluateExpression(expr)
