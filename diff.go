@@ -1,7 +1,8 @@
-package gosyms
+package main
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -128,15 +129,23 @@ func splitIgnoringBracesDiff(expr string, sep rune) []string {
 func Diff(expr string) string {
 
 	// Проверяем на наличие функций недоступных в данной версии
-	err := mvpLimitFunctionality(expr)
+	//err := mvpLimitFunctionality(expr)
 
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return ""
+	//}
 
 	expr = strings.ReplaceAll(expr, " ", "")
-	
+
+	err := validateExpression(expr)
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		os.Exit(1) // Прекращаем выполнение программы
+	} else {
+		fmt.Println("Выражение валидно.")
+	}
+
 	// Раскрываем, упрощаем, собираем
 	expr = simpDiffExpr(expr)
 
