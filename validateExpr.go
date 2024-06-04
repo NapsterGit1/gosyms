@@ -43,6 +43,10 @@ func validateExpression(expr string) error {
 		return errors.New("Некорректная степень")
 	}
 
+	if !checkFirstSymbol(expr) {
+		return errors.New("Некорректное положение операторов")
+	}
+	
 	// Если все проверки пройдены успешно, возвращаем nil
 	return nil
 }
@@ -63,6 +67,14 @@ func checkBracketsBalance(expr string) bool {
 	}
 
 	return len(stack) == 0
+}
+
+func checkFirstSymbol(expr string) bool {
+	if (expr[0] == '*' || expr[0] == '+' || expr[0] == '-' || expr[0] == '^') || (expr[len(expr)-1] == '*' ||
+		expr[len(expr)-1] == '+' || expr[len(expr)-1] == '-' || expr[len(expr)-1] == '^') {
+		return false
+	}
+	return true
 }
 
 func checkValidCharacters(expr string) bool {
