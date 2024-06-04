@@ -1,4 +1,4 @@
-package gosyms
+package main
 
 import (
 	"fmt"
@@ -136,29 +136,49 @@ func Diff(expr string) string {
 	//}
 
 	expr = strings.ReplaceAll(expr, " ", "")
+	if strings.Contains(expr, "{") || strings.Contains(expr, "}") {
+		//fmt.Println("ПУПУ")
+		// Раскрываем, упрощаем, собираем
+		expr = simpDiffExpr(expr)
+		//fmt.Println("ПУПУ1")
+		terms := createTermsDiff(expr)
 
-	err := validateExpression(expr)
-	if err != nil {
-		//fmt.Println("Ошибка:", err)
-		return "Ошибка: " + err.Error()
+		var derivedTerms []string
+		for _, term := range terms {
+			derivedTerms = append(derivedTerms, deriveTerm(term))
+		}
+		resStr := strings.Join(derivedTerms, "+")
+		resStr = replaceClosingBrackets(resStr)
+
+		// Упрощаем полученное выражение
+		resStr = SimplifyExpr(resStr)
+		return resStr
+	} else {
+		err := validateExpression(expr)
+		if err != nil {
+			//fmt.Println("Ошибка:", err)
+			return "Ошибка: " + err.Error()
+		} else {
+			//fmt.Println("ПУПУ")
+			// Раскрываем, упрощаем, собираем
+			expr = simpDiffExpr(expr)
+			//fmt.Println("ПУПУ1")
+			terms := createTermsDiff(expr)
+
+			var derivedTerms []string
+			for _, term := range terms {
+				derivedTerms = append(derivedTerms, deriveTerm(term))
+			}
+			resStr := strings.Join(derivedTerms, "+")
+			resStr = replaceClosingBrackets(resStr)
+
+			// Упрощаем полученное выражение
+			resStr = SimplifyExpr(resStr)
+			return resStr
+		}
 	}
 
-	// Раскрываем, упрощаем, собираем
-	expr = simpDiffExpr(expr)
-
-	terms := createTermsDiff(expr)
-
-	var derivedTerms []string
-	for _, term := range terms {
-		derivedTerms = append(derivedTerms, deriveTerm(term))
-	}
-	resStr := strings.Join(derivedTerms, "+")
-	resStr = replaceClosingBrackets(resStr)
-
-	// Упрощаем полученное выражение
-	resStr = SimplifyExpr(resStr)
-
-	return resStr
+	return ""
 }
 
 func diffMain(coeff float64, variable string) string {
