@@ -2,7 +2,6 @@ package gosyms
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
