@@ -1,4 +1,4 @@
-package gosyms
+package main
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ func validateExpression(expr string) error {
 		return errors.New("Пустые скобки")
 	}
 
-	if len(expr) == 0 {
+	if expr == "" {
 		return errors.New("Введите выражение. Строка не может быть пустой")
 	}
 
@@ -39,6 +39,10 @@ func validateExpression(expr string) error {
 		return errors.New("Два и более оператора подряд!")
 	}
 
+	if !checkPowBrackets(expr) {
+		return errors.New("Возведение скобки или функции в степень не поддерживается.")
+	}
+
 	if !checkValidExponent(expr) {
 		return errors.New("Некорректная степень")
 	}
@@ -46,7 +50,7 @@ func validateExpression(expr string) error {
 	if !checkFirstSymbol(expr) {
 		return errors.New("Некорректное положение операторов")
 	}
-	
+
 	// Если все проверки пройдены успешно, возвращаем nil
 	return nil
 }
@@ -70,16 +74,21 @@ func checkBracketsBalance(expr string) bool {
 }
 
 func checkFirstSymbol(expr string) bool {
-	if (expr[0] == '*' || expr[0] == '+' || expr[0] == '-' || expr[0] == '^') || (expr[len(expr)-1] == '*' ||
-		expr[len(expr)-1] == '+' || expr[len(expr)-1] == '-' || expr[len(expr)-1] == '^') {
+	if (expr[0] == '*' || expr[0] == '+' || expr[0] == '^') || (expr[len(expr)-1] == '*' ||
+		expr[len(expr)-1] == '+' || expr[len(expr)-1] == '-' || expr[len(expr)-1] == '^') ||
+		(len(expr) == 1 && expr[0] == '-') {
 		return false
 	}
 	return true
 }
 
 func checkValidCharacters(expr string) bool {
-	// Регулярное выражение для проверки наличия недопустимых символов и слова "sin(", "cos(", "EXP("
-	regex := `^[0-9+\-*^()x]+|\bsin\(|\bcos\(|\bEXP\(`
+	// Регулярное выражение для проверки наличия недопустимых символов и слова "sin(", "cos(", "EXP(" `
+
+	regex := `^[0-9+\-*^(){}xsincosEXP]+$`
+	//regex := `^[0-9+\-*^()x]+$|\bsin\(|\bcos\(|\bEXP\(+$`
+	//regex := `[^0-9+\-*^()x{}]|(?:(?:sin|cos|EXP)[({][^})]+[)}])`
+	//regex := `[^0-9+\-*^()x{}]|(?:(?:sin|cos|EXP)[({][^})]+[)}])|sin{[^{}]*}|EXP{[^{}]*}`
 
 	// Компилируем регулярное выражение
 	re := regexp.MustCompile(regex)
@@ -146,14 +155,25 @@ func checkNoConsecutiveOperators(expr string) bool {
 	return re.MatchString(expr)
 }
 
+func checkPowBrackets(expr string) bool {
+	if strings.Contains(expr, ")^") {
+		return false
+	}
+	return true
+}
+
 func checkValidExponent(expr string) bool {
-	// Регулярное выражение для поиска недопустимых степеней
-	//regex := `\^\-|\^[^\d]`
-	regex := `\^\-|\^[^\d]|\([^\d]|\(\^`
+	// Проверяем, есть ли в выражении знак '^' (степень)
+	if strings.Contains(expr, "^") {
+		// Регулярное выражение для поиска допустимых степеней
+		regex := `\^0$|\^[1-9]`
 
-	// Компилируем регулярное выражение
-	re := regexp.MustCompile(regex)
+		// Компилируем регулярное выражение
+		re := regexp.MustCompile(regex)
 
-	// Проверяем, содержит ли строка недопустимые степени
-	return !re.MatchString(expr)
+		// Проверяем, содержит ли строка допустимые степени
+		return re.MatchString(expr)
+	}
+	// Если степени нет, то возвращаем true
+	return true
 }
