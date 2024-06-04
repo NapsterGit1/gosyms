@@ -130,7 +130,7 @@ func checkRepeatedVariable(expr string) bool {
 
 func checkPowDuplicate(expr string) bool {
 	// Регулярное выражение для поиска шаблона "число^число^"
-	regex := `\d+\^\d+\^`
+	regex := `(x|\d+)\^\d+\^`
 
 	// Компилируем регулярное выражение
 	re := regexp.MustCompile(regex)
