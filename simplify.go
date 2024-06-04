@@ -1,4 +1,4 @@
-package gosyms
+package main
 
 import (
 	"errors"
