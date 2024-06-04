@@ -140,10 +140,8 @@ func Diff(expr string) string {
 
 	err := validateExpression(expr)
 	if err != nil {
-		fmt.Println("Ошибка:", err)
-		os.Exit(1) // Прекращаем выполнение программы
-	} else {
-		fmt.Println("Выражение валидно.")
+		//fmt.Println("Ошибка:", err)
+		return "Ошибка: " + err.Error()
 	}
 
 	// Раскрываем, упрощаем, собираем
