@@ -34,10 +34,10 @@ func validateExpression(expr string) error {
 		return errors.New("Повторение переменной x")
 	}
 
-	// Проверка на повторение символов
+	/*// Проверка на повторение символов
 	if checkNoConsecutiveOperators(expr) {
 		return errors.New("Два и более оператора подряд!")
-	}
+	}*/
 
 	if !checkPowBrackets(expr) {
 		return errors.New("Возведение скобки или функции в степень не поддерживается.")
@@ -130,8 +130,8 @@ func checkRepeatedVariable(expr string) bool {
 
 func checkPowDuplicate(expr string) bool {
 	// Регулярное выражение для поиска шаблона "число^число^"
+	//regex := `\d+\^\d+\^`
 	regex := `(x|\d+)\^\d+\^`
-
 	// Компилируем регулярное выражение
 	re := regexp.MustCompile(regex)
 
@@ -144,7 +144,7 @@ func checkPowDuplicate(expr string) bool {
 	return false
 }
 
-func checkNoConsecutiveOperators(expr string) bool {
+/*func checkNoConsecutiveOperators(expr string) bool {
 	// Регулярное выражение для поиска двух и более операторов подряд
 	regex := `[\+\-\*^]{2,}`
 
@@ -153,7 +153,7 @@ func checkNoConsecutiveOperators(expr string) bool {
 
 	// Проверяем, содержит ли строка два и более операторов подряд
 	return re.MatchString(expr)
-}
+}*/
 
 func checkPowBrackets(expr string) bool {
 	if strings.Contains(expr, ")^") {
